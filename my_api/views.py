@@ -14,7 +14,7 @@ import pickle
 #from .models import Kid
 #from .serializers import SpeciesSerializer
 from rest_framework.parsers import JSONParser
-
+from datetime import datetime
 null_dict={
     "id": "0",
     "title": "",
@@ -46,7 +46,7 @@ def time_parser(start_time,end_time):
 
 #file_open = open("file path", 'r', encoding="UTF-8")
 def schedule_All(uid):
-   file_path = r"C:\Users\조세연\Desktop\schedule.json"
+   file_path = r"C:\Users\조세연\Desktop\bin\schedule_origin.json"
    with open(file_path, 'r',encoding='UTF-8') as file:
       data = json.load(file)
       #print(type(data))
@@ -69,20 +69,10 @@ class ScheduleViewSet(viewsets.ModelViewSet):
     serializer_class = ScheduleSerializer
 
 @api_view(['POST'])
-def schedule_recent(request):
+def schedule_All_recent(request):
     if request.method=='POST':
-        #datas= JSONParser().parse(request)
-        #serializer = ScheduleSerializer(data=request.data)
         body=json.loads(request.body.decode('euc-kr'))
-        #if serializer.is_valid():
-           # serializer.save()
-        #else:
-            #HttpResponse("Bad")
-
-        #mod_dict=Schedule.objects.values('schedule_dt')
-        #serializer=ScheduleSerializer(mod_dict)
-        #st_json=json.dumps(serializer)
-        file_path = r"C:\Users\조세연\Desktop\schedule.json"
+        file_path = r"C:\Users\조세연\Desktop\bin\schedule_origin.json"
         with open(file_path,"w")as outfile:
             json.dump(body,outfile,ensure_ascii=False)
         return HttpResponse(body)
@@ -118,7 +108,7 @@ def schedule_add(request):
          parsed_data[dy][mth]=body
       with open(file_path,"w",encoding='UTF-8')as outfile:
          json.dump(data,outfile,ensure_ascii=False)
-         return JsonResponse({'message':'success'})
+      return JsonResponse({'message':'success'})
 
 @api_view(['POST'])
 def schedule_modify(request):#Load->delete->insert
@@ -169,7 +159,7 @@ def schedule_modify(request):#Load->delete->insert
          parsed_data[dy][mth]=body
       with open(file_path,"w",encoding='UTF-8')as outfile:
          json.dump(data,outfile,ensure_ascii=False)
-         return JsonResponse({'message':'success'})
+      return JsonResponse({'message':'success'})
 
 @api_view(['POST'])
 def schedule_delete(request):#Load->delete->insert
@@ -199,17 +189,52 @@ def schedule_delete(request):#Load->delete->insert
          dl_parsed_data[dy][mth]=null_dict#delete
       with open(file_path,"w",encoding='UTF-8')as outfile:
          json.dump(data,outfile,ensure_ascii=False)
-         return JsonResponse({'message':'success'})
-
-
-
-      
-
-
-
-
-
-
-
+      return JsonResponse({'message':'success'})
+@api_view(['GET'])
+def schedule_recent(request):
+   if request.method=='GET':
+      file_path = r"C:\Users\조세연\Desktop\bin\schedule_origin.json"
+      with open(file_path, 'r',encoding='UTF-8') as file:
+         data = json.load(file)
+      now=datetime.now()
+      dayNum=datetime.today().weekday()
+      if(dayNum==0):
+         c_day='mon'
+      elif(dayNum==1):
+         c_day='tue'
+      elif(dayNum==2):
+         c_day='wed'
+      elif(dayNum==3):
+         c_day='thu'
+      elif(dayNum==4):
+         c_day='fri'
+      else:
+         c_day='weekend'
+      c_min=(now.minute)
+      if(c_min==0):
+         c_min='00'
+         c_hour=str(now.hour).zfill(2)
+      elif(c_min<=10):
+         c_min='10'
+         c_hour=str(now.hour).zfill(2)
+      elif(c_min<=20):
+         c_min='20'
+         c_hour=str(now.hour).zfill(2)
+      elif(c_min<=30):
+         c_min='30'
+         c_hour=str(now.hour).zfill(2)
+      elif(c_min<=40):
+         c_min='40'
+         c_hour=str(now.hour).zfill(2)
+      elif(c_min<=50):
+         c_min='50'
+         c_hour=str(now.hour).zfill(2)
+      else:
+         c_min='00'
+         c_hour=now.hour+1
+         c_hour=str(c_hour).zfill(2)
+      dl_parsed_data=data['timetable']
+      dl_parsed_data=dl_parsed_data[c_day][c_hour][c_min]#slicing
+      return JsonResponse(dl_parsed_data)
 
 
