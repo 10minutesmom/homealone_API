@@ -15,6 +15,12 @@ import pickle
 #from .serializers import SpeciesSerializer
 from rest_framework.parsers import JSONParser
 from datetime import datetime
+success_message={
+   'message':'success'
+}
+fail_message={
+   'message:':'fail'
+}
 null_dict={
     "id": "0",
     "title": "",
@@ -33,7 +39,7 @@ def time_parser(start_time,end_time):
         min=min+10#add minutes
         if(min==60):
             hour=hour+1
-            min=00
+            min=0
 
         if(hour<10):
             init_time='0'+str(hour)+":"+str(min).zfill(2)
@@ -71,7 +77,7 @@ class ScheduleViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 def schedule_All_recent(request):
     if request.method=='POST':
-        body=json.loads(request.body.decode('euc-kr'))
+        body=json.loads(request.body.decode('UTF-8'))
         file_path = r"C:\Users\조세연\Desktop\bin\schedule_origin.json"
         with open(file_path,"w")as outfile:
             json.dump(body,outfile,ensure_ascii=False)
@@ -83,7 +89,7 @@ def schedule_All_recent(request):
 @api_view(['POST'])
 def schedule_add(request):
    if request.method=='POST':
-      body=json.loads(request.body.decode('euc-kr'))
+      body=json.loads(request.body.decode('UTF-8'))
       file_path = r"C:\Users\조세연\Desktop\bin\schedule_origin.json"#file path of schedule data
       with open(file_path,'r',encoding='UTF-8')as file:
          data=json.load(file) #LOAD DATASET
@@ -95,25 +101,26 @@ def schedule_add(request):
       parsed_data=data['timetable']
       parsed_data=parsed_data[day]
       time_parsed_list=time_parser(start_time,end_time)
+      
       del body['uid']
       del body['time']
       for i in time_parsed_list:#checking schedule exists
          dy=i.split(":")[0]
          mth=i.split(":")[1]
          if(parsed_data[dy][mth]['id']!='0'):
-            return JsonResponse({'message':'failed'})
+            return JsonResponse(fail_message)
       for i in time_parsed_list:#modify dict
          dy=i.split(":")[0]
          mth=i.split(":")[1]
          parsed_data[dy][mth]=body
       with open(file_path,"w",encoding='UTF-8')as outfile:
          json.dump(data,outfile,ensure_ascii=False)
-      return JsonResponse({'message':'success'})
+      return JsonResponse(success_message)
 
 @api_view(['POST'])
 def schedule_modify(request):#Load->delete->insert
    if request.method=='POST':
-      body=json.loads(request.body.decode('euc-kr'))
+      body=json.loads(request.body.decode('UTF-8'))
       file_path = r"C:\Users\조세연\Desktop\bin\schedule_origin.json"#file path of schedule data
       with open(file_path,'r',encoding='UTF-8')as file:
          data=json.load(file) #LOAD DATASET
@@ -125,12 +132,13 @@ def schedule_modify(request):#Load->delete->insert
       dl_parsed_data=data['timetable']
       dl_parsed_data=dl_parsed_data[dl_day]
       dl_time_parsed_list=time_parser(dl_start_time,dl_end_time)
+      dl_time_parsed_list.append(dl_end_time)
 
       for i in dl_time_parsed_list:#checking schedule exists
          dy=i.split(":")[0]
          mth=i.split(":")[1]
          if(dl_parsed_data[dy][mth]['id']=='0'): #if empty, we cannot erase
-            return JsonResponse({'message':'failed'})
+            return JsonResponse({'message':'fail'})
       
       for i in dl_time_parsed_list:#modify dict
          dy=i.split(":")[0]
@@ -159,12 +167,12 @@ def schedule_modify(request):#Load->delete->insert
          parsed_data[dy][mth]=body
       with open(file_path,"w",encoding='UTF-8')as outfile:
          json.dump(data,outfile,ensure_ascii=False)
-      return JsonResponse({'message':'success'})
+      return JsonResponse({'message':'successed'})
 
 @api_view(['POST'])
 def schedule_delete(request):#Load->delete->insert
    if request.method=='POST':
-      body=json.loads(request.body.decode('euc-kr'))
+      body=json.loads(request.body.decode('UTF-8'))
       file_path = r"C:\Users\조세연\Desktop\bin\schedule_origin.json"#file path of schedule data
       with open(file_path,'r',encoding='UTF-8')as file:
          data=json.load(file) #LOAD DATASET
@@ -176,6 +184,7 @@ def schedule_delete(request):#Load->delete->insert
       dl_parsed_data=data['timetable']
       dl_parsed_data=dl_parsed_data[dl_day]
       dl_time_parsed_list=time_parser(dl_start_time,dl_end_time)
+      dl_time_parsed_list.append(dl_end_time)
 
       for i in dl_time_parsed_list:#checking schedule exists
          dy=i.split(":")[0]
