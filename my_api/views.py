@@ -15,6 +15,32 @@ import pickle
 #from .serializers import SpeciesSerializer
 from rest_framework.parsers import JSONParser
 from datetime import datetime
+def getNextTime(init_time):
+   hour=int(init_time.split(':')[0])
+   min=int(init_time.split(':')[1])
+   min=min+10#add minutes
+   if(min==60):
+      hour=hour+1
+      min=00
+
+   if(hour<10):
+      init_time='0'+str(hour)+":"+str(min).zfill(2)
+   else:
+      init_time=str(hour)+':'+str(min).zfill(2)
+   return init_time
+def getPrevTime(init_time):
+   hour=int(init_time.split(':')[0])
+   min=int(init_time.split(':')[1])
+   min=min-10#add minutes
+   if(min<0):
+      hour=hour-1
+      min=50    
+
+   if(hour<10):
+      init_time='0'+str(hour)+":"+str(min).zfill(2)
+   else:
+      init_time=str(hour)+':'+str(min).zfill(2)
+   return init_time 
 success_message={
    'message':'success'
 }
@@ -243,7 +269,79 @@ def schedule_recent(request):
          c_hour=now.hour+1
          c_hour=str(c_hour).zfill(2)
       dl_parsed_data=data['timetable']
-      dl_parsed_data=dl_parsed_data[c_day][c_hour][c_min]#slicing
-      return JsonResponse(dl_parsed_data)
+      date_time=c_hour+':'+c_min
+      c_hour,c_min=date_time.split(":")[0].zfill(2),date_time.split(":")[1].zfill(2)###
+      if(dl_parsed_data[c_day][c_hour][c_min]['id']=='0'):#schedule empty check
+         while(True):#if it is empty, we should find upcoming schedule
+            date_time=getNextTime(date_time)#next 10 minutes
+            c_hour,c_min=date_time.split(":")[0],date_time.split(":")[1]#spliting into hour,minutes
+            if(dl_parsed_data[c_day][c_hour][c_min]['id']!='0'):#checkingS if its zero
+               rtData=dl_parsed_data[c_day][c_hour][c_min]#insert data into rtDATA(Return data)
+               break #find schedule
+         c_hour,c_min,cid=date_time.split(":")[0],date_time.split(":")[1],dl_parsed_data[c_day][c_hour][c_min]['id']#get current hour, get current id
+         startHour,startMin=c_hour,c_min#setting up startHour,startMin
+         while(True):
+            date_time=getNextTime(date_time)#next time
+            c_hour,c_min=date_time.split(":")[0],date_time.split(":")[1]
+            if(dl_parsed_data[c_day][c_hour][c_min]['id']!=cid):
+               break
+         endHour,endMin=date_time.split(":")[0],date_time.split(":")[1] #endHour,endMin
+         time={
+        'day':c_day,
+        'startHour':startHour,
+        'startMin':startMin,
+        'endHour':endHour,
+        "endMin":endMin
+         }
+         rtData.update(time)
+         return JsonResponse(rtData)#####
+      else:#schedule exists
+         uid=dl_parsed_data[c_day][c_hour][c_min]['id']#get uid
+         init_time=date_time #앞으로 갈때 찾으려고 저장함
+         prev_time=getPrevTime(init_time)#get prevTime
+         prev_hour,prev_min=prev_time.split(":")[0],prev_time.split(":")[1]
+         prev_id=dl_parsed_data[c_day][prev_hour][prev_min]['id']#get prev_id
+         if(uid==prev_id):#If it exists, it is continuing schedule
+            while(True):
+               date_time=getNextTime(date_time)#get next date_time(10 minutes)
+               c_hour,c_min=date_time.split(":")[0],date_time.split(":")[1]#slicing hour,min
+               if(dl_parsed_data[c_day][c_hour][c_min]['id']!=uid and dl_parsed_data[c_day][c_hour][c_min]['id']!='0'):#checking id is not null and not 중복
+                  rtData,cid=dl_parsed_data[c_day][c_hour][c_min],dl_parsed_data[c_day][c_hour][c_min]['id']#rt data랑 cid찾음
+                  break
+            startHour,startMin=date_time.split(":")[0],date_time.split(":")[1]#set up startHour and startMin
+            while(True):#endhour찾기
+               date_time=getNextTime(date_time)
+               c_hour,c_min=date_time.split(":")[0],date_time.split(":")[1]
+               if(dl_parsed_data[c_day][c_hour][c_min]['id']!=cid):#find different uid
+                  break#end of loop
+            endHour,endMin=date_time.split(":")[0],date_time.split(":")[1]
+            time={
+               'day':c_day,
+               'startHour':startHour,
+               'startMin':startMin,
+               'endHour':endHour,
+               "endMin":endMin
+               }
+            rtData.update(time)
+         else:#schedule ended, new schedule starts at timeunit
+            rtData=dl_parsed_data[c_day][c_hour][c_min]#current data into rtData
+            startHour,startMin=init_time.split(":")[0],init_time.split(":")[1]
+            while(True):
+               date_time=getNextTime(date_time)#getting next time
+               c_hour,c_min=date_time.split(":")[0],date_time.split(":")[1]
+               if(dl_parsed_data[c_day][c_hour][c_min]['id']!=uid):
+                  break
+            endHour,endMin=date_time.split(":")[0],date_time.split(":")[1]#endHour get
+            time={
+            'day':c_day,
+            'startHour':startHour,
+            'startMin':startMin,
+            'endHour':endHour,
+            "endMin":endMin}
+            rtData.update(time)
+            return JsonResponse(rtData)
+
+
+
 
 
