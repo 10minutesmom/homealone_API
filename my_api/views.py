@@ -275,6 +275,8 @@ def schedule_recent(request):
          while(True):#if it is empty, we should find upcoming schedule
             date_time=getNextTime(date_time)#next 10 minutes
             c_hour,c_min=date_time.split(":")[0],date_time.split(":")[1]#spliting into hour,minutes
+            if(c_hour=='24'):#
+               return JsonResponse({'message':'No schedule!!'})#
             if(dl_parsed_data[c_day][c_hour][c_min]['id']!='0'):#checkingS if its zero
                rtData=dl_parsed_data[c_day][c_hour][c_min]#insert data into rtDATA(Return data)
                break #find schedule
@@ -305,6 +307,8 @@ def schedule_recent(request):
             while(True):
                date_time=getNextTime(date_time)#get next date_time(10 minutes)
                c_hour,c_min=date_time.split(":")[0],date_time.split(":")[1]#slicing hour,min
+               if(c_hour=='24'):
+                  return JsonResponse({'message':'No schedule left!'})
                if(dl_parsed_data[c_day][c_hour][c_min]['id']!=uid and dl_parsed_data[c_day][c_hour][c_min]['id']!='0'):#checking id is not null and not 중복
                   rtData,cid=dl_parsed_data[c_day][c_hour][c_min],dl_parsed_data[c_day][c_hour][c_min]['id']#rt data랑 cid찾음
                   break
