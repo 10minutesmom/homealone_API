@@ -327,6 +327,7 @@ def schedule_recent(request):
                "endMin":endMin
                }
             rtData.update(time)
+            return JsonResponse(rtData)
          else:#schedule ended, new schedule starts at timeunit
             rtData=dl_parsed_data[c_day][c_hour][c_min]#current data into rtData
             startHour,startMin=init_time.split(":")[0],init_time.split(":")[1]
